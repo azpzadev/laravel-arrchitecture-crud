@@ -5,9 +5,17 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\V1\AuthController;
 use Illuminate\Support\Facades\Route;
 
-// Public auth routes
+/*
+|--------------------------------------------------------------------------
+| Auth Routes
+|--------------------------------------------------------------------------
+*/
+
+// Public auth routes (with rate limiting for security)
 Route::prefix('auth')->name('auth.')->group(function () {
-    Route::post('/login', [AuthController::class, 'login'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])
+        ->middleware('throttle:auth')
+        ->name('login');
 });
 
 // Protected auth routes (requires Sanctum authentication)
