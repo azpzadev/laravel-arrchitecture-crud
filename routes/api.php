@@ -1,0 +1,38 @@
+<?php
+
+declare(strict_types=1);
+
+use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register API routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "api" middleware group.
+|
+*/
+
+// API Version 1
+Route::prefix('v1')->name('api.v1.')->group(function () {
+    require __DIR__ . '/api/v1/customers.php';
+
+    // Add more v1 routes here
+    // require __DIR__ . '/api/v1/orders.php';
+    // require __DIR__ . '/api/v1/products.php';
+});
+
+// API Version 2 (future)
+// Route::prefix('v2')->name('api.v2.')->group(function () {
+//     require __DIR__ . '/api/v2/customers.php';
+// });
+
+// Health check endpoint
+Route::get('/health', function () {
+    return response()->json([
+        'status' => 'ok',
+        'timestamp' => now()->toIso8601String(),
+    ]);
+})->name('api.health');
