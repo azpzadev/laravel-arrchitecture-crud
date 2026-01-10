@@ -12,15 +12,13 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Public auth routes (with rate limiting for security)
-Route::prefix('auth')->name('auth.')->group(function () {
-    Route::post('/login', [AuthController::class, 'login'])
-        ->middleware('throttle:auth')
-        ->name('login');
-});
+Route::post('/login', [AuthController::class, 'login'])
+    ->middleware('throttle:auth')
+    ->name('auth.login');
 
 // Protected auth routes (requires Sanctum authentication)
-Route::prefix('auth')->name('auth.')->middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-    Route::post('/logout-all', [AuthController::class, 'logoutAll'])->name('logout-all');
-    Route::get('/me', [AuthController::class, 'me'])->name('me');
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');
+    Route::post('/logout-all', [AuthController::class, 'logoutAll'])->name('auth.logout-all');
+    Route::get('/me', [AuthController::class, 'me'])->name('auth.me');
 });
