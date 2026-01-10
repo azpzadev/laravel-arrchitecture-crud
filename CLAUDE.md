@@ -70,15 +70,82 @@ API layer:
 - **Requests/**: Form requests with `toDto()` method for conversion to domain DTOs
 - **Resources/**: API resources for JSON response formatting
 - **Responses/**: Standardized API response helpers (`ApiResponse`)
-- **Middleware/**: API middleware
+- **Middleware/**: API middleware (ValidateApiToken, ForceJsonResponse)
 
 ### Routes
 - **routes/api.php**: Main API router with versioning
-- **routes/api/v1/**: Version 1 API endpoints
+- **routes/api/v1/**: Version 1 API endpoints (auth.php, customers.php)
 
 ### Providers
 - **RepositoryServiceProvider**: Binds repository interfaces to implementations
 - **DomainServiceProvider**: Registers domain events, listeners, and policies
+
+## Authentication
+
+Uses Laravel Sanctum for token-based authentication with username/password login.
+
+### API Token Header (x-api-token)
+All API requests require a static API token in the header (configurable):
+```bash
+# .env
+API_TOKEN_HEADER=x-api-token
+API_TOKEN=your-secret-token
+```
+
+### Auth Endpoints
+```
+POST   /api/v1/auth/login      # Login with username/password, returns Bearer token
+POST   /api/v1/auth/logout     # Logout current device (requires auth)
+POST   /api/v1/auth/logout-all # Logout all devices (requires auth)
+GET    /api/v1/auth/me         # Get current user (requires auth)
+```
+
+### Login Request
+```json
+{
+    "username": "johndoe",
+    "password": "password123",
+    "device_name": "mobile"  // optional, defaults to "api"
+}
+```
+
+### Login Response
+```json
+{
+    "success": true,
+    "message": "Login successful",
+    "data": {
+        "user": { "uuid": "...", "name": "...", "username": "...", "email": "..." },
+        "token": { "access_token": "1|abc123...", "token_type": "Bearer" }
+    }
+}
+```
+
+### Using Bearer Token
+After login, include the token in subsequent requests:
+```
+Authorization: Bearer 1|abc123...
+```
+
+### Auth Domain Structure
+```
+app/Domain/Auth/
+├── Actions/
+│   ├── LoginAction.php
+│   └── LogoutAction.php
+├── DTOs/
+│   ├── LoginData.php
+│   └── AuthTokenData.php
+├── Services/
+│   └── AuthService.php
+├── Events/
+│   ├── UserLoggedIn.php
+│   └── UserLoggedOut.php
+└── Exceptions/
+    ├── InvalidCredentialsException.php
+    ├── InvalidApiTokenException.php
+    └── UserNotFoundException.php
+```
 
 ## Key Patterns
 
@@ -136,6 +203,7 @@ return ApiResponse::success($data, 'Message', 200);
 return ApiResponse::created(new CustomerResource($customer));
 return ApiResponse::paginated($paginator, CustomerResource::class);
 return ApiResponse::error('Message', 400, $errors, 'ERROR_CODE');
+return ApiResponse::unauthorized('Message');
 ```
 
 ## Adding a New Domain
@@ -181,4 +249,5 @@ return ApiResponse::error('Message', 400, $errors, 'ERROR_CODE');
 - Feature tests in `tests/Feature/Api/V1/`
 - Unit tests in `tests/Unit/Domain/{DomainName}/`
 - Uses `RefreshDatabase` trait for database tests
-- Customer factory available: `Customer::factory()->active()->create()`
+- User factory: `User::factory()->withPassword('secret')->create()`
+- Customer factory: `Customer::factory()->active()->create()`

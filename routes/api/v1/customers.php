@@ -5,7 +5,8 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\V1\CustomerController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('customers')->name('customers.')->group(function () {
+// All customer routes require authentication
+Route::prefix('customers')->name('customers.')->middleware('auth:sanctum')->group(function () {
     Route::get('/', [CustomerController::class, 'index'])->name('index');
     Route::post('/', [CustomerController::class, 'store'])->name('store');
     Route::get('/{customer}', [CustomerController::class, 'show'])->name('show');
