@@ -6,6 +6,7 @@ namespace App\Infrastructure\Models;
 
 use App\Domain\Customer\Enums\CustomerStatus;
 use App\Domain\Shared\Traits\HasUuid;
+use Database\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -14,6 +15,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Customer extends Model
 {
     use HasFactory, HasUuid, SoftDeletes;
+
+    protected static function newFactory(): CustomerFactory
+    {
+        return CustomerFactory::new();
+    }
 
     protected $fillable = [
         'uuid',
