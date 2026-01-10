@@ -6,8 +6,10 @@ namespace App\Domain\Auth\Services;
 
 use App\Domain\Auth\Actions\LoginAction;
 use App\Domain\Auth\Actions\LogoutAction;
+use App\Domain\Auth\DTOs\AuthTokenData;
 use App\Domain\Auth\DTOs\LoginData;
 use App\Infrastructure\Models\User;
+use App\Infrastructure\Repositories\Contracts\UserRepositoryInterface;
 
 /**
  * Service layer for authentication operations.
@@ -21,10 +23,12 @@ class AuthService
     /**
      * Create a new AuthService instance.
      *
+     * @param UserRepositoryInterface $userRepository The user repository
      * @param LoginAction $loginAction The login action handler
      * @param LogoutAction $logoutAction The logout action handler
      */
     public function __construct(
+        private UserRepositoryInterface $userRepository,
         private LoginAction $loginAction,
         private LogoutAction $logoutAction,
     ) {}
@@ -33,7 +37,7 @@ class AuthService
      * Authenticate a user with credentials.
      *
      * @param LoginData $data The login credentials
-     * @return array{user: User, token: \App\Domain\Auth\DTOs\AuthTokenData}
+     * @return array{user: User, token: AuthTokenData}
      *
      * @throws \App\Domain\Auth\Exceptions\InvalidCredentialsException
      */
@@ -62,5 +66,39 @@ class AuthService
     public function user(): ?User
     {
         return auth()->user();
+    }
+
+    /**
+     * Find a user by UUID.
+     *
+     * @param string $uuid The user UUID
+     * @return User|null The user or null if not found
+     */
+    public function findByUuid(string $uuid): ?User
+    {
+        /** @var User|null */
+        return $this->userRepository->findByUuid($uuid);
+    }
+
+    /**
+     * Find a user by username.
+     *
+     * @param string $username The username
+     * @return User|null The user or null if not found
+     */
+    public function findByUsername(string $username): ?User
+    {
+        return $this->userRepository->findByUsername($username);
+    }
+
+    /**
+     * Find a user by email.
+     *
+     * @param string $email The email address
+     * @return User|null The user or null if not found
+     */
+    public function findByEmail(string $email): ?User
+    {
+        return $this->userRepository->findByEmail($email);
     }
 }

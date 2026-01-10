@@ -122,8 +122,39 @@ classDiagram
     DeleteCustomerAction --> CustomerRepositoryInterface
 ```
 
-### Implementation Example
+### Implementation Examples
 
+**Auth Domain - LoginAction:**
+```php
+class LoginAction
+{
+    public function __construct(
+        private UserRepositoryInterface $userRepository
+    ) {}
+
+    public function execute(LoginData $data): array
+    {
+        // 1. Find user via repository (not direct model access!)
+        $user = $this->userRepository->findByUsername($data->username);
+
+        // 2. Validate credentials
+        if (!$user || !Hash::check($data->password, $user->password)) {
+            throw new InvalidCredentialsException();
+        }
+
+        // 3. Manage tokens via repository
+        $this->userRepository->deleteTokensByDevice($user, $data->deviceName);
+        $token = $this->userRepository->createToken($user, $data->deviceName);
+
+        // 4. Dispatch event
+        event(new UserLoggedIn($user, $data->deviceName));
+
+        return ['user' => $user, 'token' => new AuthTokenData($token, 'Bearer')];
+    }
+}
+```
+
+**Customer Domain - CreateCustomerAction:**
 ```php
 class CreateCustomerAction
 {

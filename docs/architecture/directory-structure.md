@@ -152,10 +152,12 @@ app/Infrastructure/
 └── Repositories/
     ├── Contracts/
     │   ├── BaseRepositoryInterface.php
-    │   └── CustomerRepositoryInterface.php
+    │   ├── CustomerRepositoryInterface.php
+    │   └── UserRepositoryInterface.php
     └── Eloquent/
         ├── BaseRepository.php
-        └── CustomerRepository.php
+        ├── CustomerRepository.php
+        └── UserRepository.php
 ```
 
 ---

@@ -283,6 +283,16 @@ The infrastructure layer handles data persistence and external services.
 **Location:** `app/Infrastructure/Repositories/Contracts/`
 
 ```php
+// User Repository Interface (for Auth domain)
+interface UserRepositoryInterface extends BaseRepositoryInterface
+{
+    public function findByUsername(string $username): ?User;
+    public function findByEmail(string $email): ?User;
+    public function createToken(User $user, string $deviceName): string;
+    public function deleteTokensByDevice(User $user, string $deviceName): int;
+}
+
+// Customer Repository Interface
 interface CustomerRepositoryInterface extends BaseRepositoryInterface
 {
     public function findByEmail(string $email): ?Customer;
@@ -296,6 +306,26 @@ interface CustomerRepositoryInterface extends BaseRepositoryInterface
 **Location:** `app/Infrastructure/Repositories/Eloquent/`
 
 ```php
+// User Repository (for Auth domain)
+class UserRepository extends BaseRepository implements UserRepositoryInterface
+{
+    protected function resolveModel(): Model
+    {
+        return new User();
+    }
+
+    public function findByUsername(string $username): ?User
+    {
+        return $this->model->where('username', $username)->first();
+    }
+
+    public function createToken(User $user, string $deviceName): string
+    {
+        return $user->createToken($deviceName)->plainTextToken;
+    }
+}
+
+// Customer Repository
 class CustomerRepository extends BaseRepository implements CustomerRepositoryInterface
 {
     protected function resolveModel(): Model

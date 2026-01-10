@@ -9,6 +9,7 @@ use App\Domain\Auth\DTOs\LoginData;
 use App\Domain\Auth\Events\UserLoggedIn;
 use App\Domain\Auth\Exceptions\InvalidCredentialsException;
 use App\Infrastructure\Models\User;
+use App\Infrastructure\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Support\Facades\Hash;
 
 /**
@@ -20,6 +21,15 @@ use Illuminate\Support\Facades\Hash;
  */
 class LoginAction
 {
+    /**
+     * Create a new LoginAction instance.
+     *
+     * @param UserRepositoryInterface $userRepository The user repository
+     */
+    public function __construct(
+        private UserRepositoryInterface $userRepository,
+    ) {}
+
     /**
      * Execute the login process.
      *
@@ -34,24 +44,24 @@ class LoginAction
      */
     public function execute(LoginData $data): array
     {
-        $user = User::where('username', $data->username)->first();
+        $user = $this->userRepository->findByUsername($data->username);
 
         if (!$user || !Hash::check($data->password, $user->password)) {
             throw new InvalidCredentialsException();
         }
 
         // Revoke all previous tokens for this device
-        $user->tokens()->where('name', $data->deviceName)->delete();
+        $this->userRepository->deleteTokensByDevice($user, $data->deviceName);
 
         // Create new token
-        $token = $user->createToken($data->deviceName);
+        $accessToken = $this->userRepository->createToken($user, $data->deviceName);
 
         event(new UserLoggedIn($user, $data->deviceName, request()->ip()));
 
         return [
             'user' => $user,
             'token' => new AuthTokenData(
-                accessToken: $token->plainTextToken,
+                accessToken: $accessToken,
                 tokenType: 'Bearer',
             ),
         ];

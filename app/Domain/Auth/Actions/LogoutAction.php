@@ -6,6 +6,7 @@ namespace App\Domain\Auth\Actions;
 
 use App\Domain\Auth\Events\UserLoggedOut;
 use App\Infrastructure\Models\User;
+use App\Infrastructure\Repositories\Contracts\UserRepositoryInterface;
 
 /**
  * Handles user logout and token revocation.
@@ -15,6 +16,15 @@ use App\Infrastructure\Models\User;
  */
 class LogoutAction
 {
+    /**
+     * Create a new LogoutAction instance.
+     *
+     * @param UserRepositoryInterface $userRepository The user repository
+     */
+    public function __construct(
+        private UserRepositoryInterface $userRepository,
+    ) {}
+
     /**
      * Execute the logout process.
      *
@@ -29,9 +39,9 @@ class LogoutAction
     public function execute(User $user, bool $allDevices = false): bool
     {
         if ($allDevices) {
-            $user->tokens()->delete();
+            $this->userRepository->deleteAllTokens($user);
         } else {
-            $user->currentAccessToken()->delete();
+            $this->userRepository->deleteCurrentToken($user);
         }
 
         event(new UserLoggedOut($user, $allDevices));
