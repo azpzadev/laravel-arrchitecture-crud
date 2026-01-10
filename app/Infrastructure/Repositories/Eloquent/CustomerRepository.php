@@ -11,23 +11,41 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Eloquent implementation of CustomerRepositoryInterface.
+ *
+ * Provides data access methods for Customer entities using
+ * Eloquent ORM with filtering and search capabilities.
+ */
 class CustomerRepository extends BaseRepository implements CustomerRepositoryInterface
 {
+    /**
+     * {@inheritdoc}
+     */
     protected function resolveModel(): Model
     {
         return new Customer();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function findByEmail(string $email): ?Customer
     {
         return $this->model->where('email', $email)->first();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function existsByEmail(string $email): bool
     {
         return $this->model->where('email', $email)->exists();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function findByStatus(string $status): array
     {
         return $this->model
@@ -36,6 +54,9 @@ class CustomerRepository extends BaseRepository implements CustomerRepositoryInt
             ->all();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getActiveCustomers(): array
     {
         return $this->model
@@ -45,6 +66,9 @@ class CustomerRepository extends BaseRepository implements CustomerRepositoryInt
             ->all();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function searchCustomers(string $query): array
     {
         return $this->model
@@ -54,6 +78,9 @@ class CustomerRepository extends BaseRepository implements CustomerRepositoryInt
             ->all();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function paginate(int $perPage = 15, array $filters = []): LengthAwarePaginator
     {
         $query = $this->newQuery();
@@ -68,6 +95,13 @@ class CustomerRepository extends BaseRepository implements CustomerRepositoryInt
             ->paginate($perPage);
     }
 
+    /**
+     * Apply customer-specific filters to the query.
+     *
+     * @param Builder $query The query builder
+     * @param array $filters Filter criteria (search, status, company, dates, with_trashed)
+     * @return Builder The modified query builder
+     */
     protected function applyFilters(Builder $query, array $filters): Builder
     {
         if (!empty($filters['search'])) {

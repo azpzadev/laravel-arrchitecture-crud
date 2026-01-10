@@ -7,8 +7,21 @@ namespace App\Http\Resources\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * API resource for authenticated user data.
+ *
+ * Defines the JSON structure for user data in authentication responses.
+ *
+ * @mixin \App\Infrastructure\Models\User
+ */
 class AuthUserResource extends JsonResource
 {
+    /**
+     * Transform the user model into an array.
+     *
+     * @param Request $request The incoming request
+     * @return array<string, mixed> The transformed user data
+     */
     public function toArray(Request $request): array
     {
         return [

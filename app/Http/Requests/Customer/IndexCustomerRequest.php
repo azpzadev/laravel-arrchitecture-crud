@@ -9,13 +9,30 @@ use App\Domain\Customer\Enums\CustomerStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
+/**
+ * Form request for listing customers with filters.
+ *
+ * Validates and sanitizes query parameters for the customer index endpoint.
+ *
+ * @method CustomerFilterData toDto() Convert validated data to DTO
+ */
 class IndexCustomerRequest extends FormRequest
 {
+    /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool Always true (authorization handled elsewhere)
+     */
     public function authorize(): bool
     {
         return true;
     }
 
+    /**
+     * Get the validation rules for customer listing.
+     *
+     * @return array<string, array<int, mixed>> Validation rules
+     */
     public function rules(): array
     {
         return [
@@ -32,6 +49,11 @@ class IndexCustomerRequest extends FormRequest
         ];
     }
 
+    /**
+     * Convert the validated request data to a CustomerFilterData DTO.
+     *
+     * @return CustomerFilterData The filter data object
+     */
     public function toDto(): CustomerFilterData
     {
         return CustomerFilterData::fromArray($this->validated());

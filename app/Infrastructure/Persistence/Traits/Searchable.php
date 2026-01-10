@@ -6,8 +6,27 @@ namespace App\Infrastructure\Persistence\Traits;
 
 use Illuminate\Database\Eloquent\Builder;
 
+/**
+ * Trait for adding search capabilities to Eloquent models.
+ *
+ * Allows models to define searchable fields including
+ * relationship fields using dot notation.
+ *
+ * @property array $searchable List of fields to search (supports relation.field notation)
+ */
 trait Searchable
 {
+    /**
+     * Apply search term to searchable fields.
+     *
+     * Searches across all fields defined in $searchable using
+     * case-insensitive ILIKE matching. Supports searching
+     * through relationships using dot notation.
+     *
+     * @param Builder $query The query builder
+     * @param string|null $term The search term
+     * @return Builder The modified query builder
+     */
     public function scopeSearch(Builder $query, ?string $term): Builder
     {
         if (empty($term)) {

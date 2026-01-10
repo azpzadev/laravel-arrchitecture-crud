@@ -40,6 +40,178 @@ php artisan migrate:fresh        # Drop all tables and re-run migrations
 php artisan db:seed              # Run database seeders
 ```
 
+## Coding Standards
+
+### PHPDoc Documentation
+
+Every file and function MUST have proper PHPDoc documentation explaining what it does.
+
+#### Class Documentation
+```php
+/**
+ * Handles customer creation with validation and event dispatching.
+ *
+ * This action validates customer data, checks for duplicates,
+ * creates the customer record, and dispatches the CustomerCreated event.
+ */
+class CreateCustomerAction
+{
+    // ...
+}
+```
+
+#### Method Documentation
+```php
+/**
+ * Execute the customer creation process.
+ *
+ * @param CustomerData $data The validated customer data transfer object
+ * @return Customer The newly created customer model
+ *
+ * @throws CustomerAlreadyExistsException When email already exists
+ */
+public function execute(CustomerData $data): Customer
+{
+    // ...
+}
+```
+
+#### Property Documentation
+```php
+/**
+ * @var CustomerRepositoryInterface The customer repository instance
+ */
+private CustomerRepositoryInterface $repository;
+```
+
+#### Interface Method Annotations
+```php
+/**
+ * @method array validate(array $rules, ...$params) Validate request data against rules
+ * @method array validated() Get the validated request data
+ * @method bool hasValidSignature(bool $absolute = true) Check if request has valid signature
+ */
+```
+
+#### DTO Documentation
+```php
+/**
+ * Data Transfer Object for customer information.
+ *
+ * @property-read string $name Customer's full name
+ * @property-read string $email Customer's email address
+ * @property-read string|null $phone Customer's phone number (optional)
+ */
+readonly class CustomerData
+{
+    /**
+     * Create a new CustomerData instance.
+     *
+     * @param string $name Customer's full name
+     * @param string $email Customer's email address
+     * @param string|null $phone Customer's phone number
+     */
+    public function __construct(
+        public string $name,
+        public string $email,
+        public ?string $phone = null,
+    ) {}
+
+    /**
+     * Create instance from array data.
+     *
+     * @param array{name: string, email: string, phone?: string|null} $data
+     * @return self
+     */
+    public static function fromArray(array $data): self
+    {
+        // ...
+    }
+}
+```
+
+#### Repository Interface Documentation
+```php
+/**
+ * Contract for customer data persistence operations.
+ *
+ * Defines the interface for customer repository implementations,
+ * providing methods for CRUD operations and custom queries.
+ */
+interface CustomerRepositoryInterface extends BaseRepositoryInterface
+{
+    /**
+     * Find a customer by their email address.
+     *
+     * @param string $email The email address to search for
+     * @return Customer|null The customer if found, null otherwise
+     */
+    public function findByEmail(string $email): ?Customer;
+}
+```
+
+#### Controller Documentation
+```php
+/**
+ * Handles HTTP requests for customer management.
+ *
+ * @group Customers
+ * @authenticated
+ */
+class CustomerController extends Controller
+{
+    /**
+     * Display a paginated list of customers.
+     *
+     * @param IndexCustomerRequest $request The validated index request
+     * @return JsonResponse Paginated customer list
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "data": [...],
+     *   "meta": {"current_page": 1, "total": 100}
+     * }
+     */
+    public function index(IndexCustomerRequest $request): JsonResponse
+    {
+        // ...
+    }
+}
+```
+
+#### Request Documentation
+```php
+/**
+ * Validates and transforms customer creation request.
+ *
+ * @property string $name Customer name (required, max 255)
+ * @property string $email Customer email (required, unique)
+ * @property string|null $phone Customer phone (optional)
+ */
+class StoreCustomerRequest extends FormRequest
+{
+    /**
+     * Get the validation rules for the request.
+     *
+     * @return array<string, array<int, string|Rule>>
+     */
+    public function rules(): array
+    {
+        // ...
+    }
+
+    /**
+     * Convert validated request data to CustomerData DTO.
+     *
+     * @return CustomerData
+     */
+    public function toDto(): CustomerData
+    {
+        // ...
+    }
+}
+```
+
 ## Architecture
 
 This project follows a Domain-Driven Design (DDD) layered architecture:
@@ -73,10 +245,12 @@ API layer:
 - **Middleware/**: API middleware (ValidateApiToken, ForceJsonResponse)
 
 ### Routes
-- **routes/api.php**: Main API router with versioning
+- **routes/api.php**: Main API routes (health, info)
+- **routes/api/v1.php**: V1 route aggregator
 - **routes/api/v1/**: Version 1 API endpoints (auth.php, customers.php)
 
 ### Providers
+- **RouteServiceProvider**: Configures routes and rate limiting
 - **RepositoryServiceProvider**: Binds repository interfaces to implementations
 - **DomainServiceProvider**: Registers domain events, listeners, and policies
 
@@ -94,10 +268,10 @@ API_TOKEN=your-secret-token
 
 ### Auth Endpoints
 ```
-POST   /api/v1/auth/login      # Login with username/password, returns Bearer token
-POST   /api/v1/auth/logout     # Logout current device (requires auth)
-POST   /api/v1/auth/logout-all # Logout all devices (requires auth)
-GET    /api/v1/auth/me         # Get current user (requires auth)
+POST /api/v1/login       # Login with username/password, returns Bearer token
+POST /api/v1/logout      # Logout current device (requires auth)
+POST /api/v1/logout-all  # Logout all devices (requires auth)
+GET  /api/v1/me          # Get current user (requires auth)
 ```
 
 ### Login Request
@@ -105,7 +279,7 @@ GET    /api/v1/auth/me         # Get current user (requires auth)
 {
     "username": "johndoe",
     "password": "password123",
-    "device_name": "mobile"  // optional, defaults to "api"
+    "device_name": "mobile"
 }
 ```
 
@@ -127,32 +301,11 @@ After login, include the token in subsequent requests:
 Authorization: Bearer 1|abc123...
 ```
 
-### Auth Domain Structure
-```
-app/Domain/Auth/
-├── Actions/
-│   ├── LoginAction.php
-│   └── LogoutAction.php
-├── DTOs/
-│   ├── LoginData.php
-│   └── AuthTokenData.php
-├── Services/
-│   └── AuthService.php
-├── Events/
-│   ├── UserLoggedIn.php
-│   └── UserLoggedOut.php
-└── Exceptions/
-    ├── InvalidCredentialsException.php
-    ├── InvalidApiTokenException.php
-    └── UserNotFoundException.php
-```
-
 ## Key Patterns
 
 ### Repository Pattern
 All data access goes through repository interfaces:
 ```php
-// Interface
 interface CustomerRepositoryInterface extends BaseRepositoryInterface {
     public function findByEmail(string $email): ?Customer;
 }
@@ -233,7 +386,7 @@ return ApiResponse::unauthorized('Message');
 
 9. Create resources in `app/Http/Resources/{DomainName}/`
 
-10. Add routes in `routes/api/v1/{domain}.php` and include in `routes/api.php`
+10. Add routes in `routes/api/v1/{domain}.php` and include in `routes/api/v1.php`
 
 11. Create migration and factory in `database/`
 

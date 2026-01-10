@@ -7,8 +7,21 @@ namespace App\Http\Resources\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * API resource for transforming Customer models.
+ *
+ * Defines the JSON structure for customer data in API responses.
+ *
+ * @mixin \App\Infrastructure\Models\Customer
+ */
 class CustomerResource extends JsonResource
 {
+    /**
+     * Transform the customer model into an array.
+     *
+     * @param Request $request The incoming request
+     * @return array<string, mixed> The transformed customer data
+     */
     public function toArray(Request $request): array
     {
         return [
